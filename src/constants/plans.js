@@ -1,0 +1,56 @@
+export const PLANS = {
+  starter: {
+    id: "starter",
+    name: "Starter",
+    price: 0,
+    priceLabel: "Gratuit",
+    description: "Pour démarrer et tester la plateforme",
+    limits: {
+      maxOrders: 10,
+      maxItemsPerOrder: 3,
+      hasAI: false, // unused
+      hasInvoice: false,
+      hasCharts: false,
+      hasExport: false,
+      hasWhatsApp: false,
+    },
+    features: [
+      { label: "Jusqu'à 10 commandes", included: true },
+      { label: "3 articles max par commande", included: true },
+      { label: "KPIs du tableau de bord", included: true },
+      { label: "Recherche et filtres", included: true },
+      { label: "Envoi WhatsApp automatique", included: false },
+      { label: "Graphiques et analytics", included: false },
+      { label: "Génération de factures PDF", included: false },
+      { label: "Export CSV des commandes", included: false },
+    ],
+  },
+  pro: {
+    id: "pro",
+    name: "Pro",
+    price: 5000,
+    priceLabel: "5 000 F CFA",
+    period: "/ mois",
+    description: "Pour les pros qui veulent tout maîtriser",
+    badge: "Populaire",
+    limits: {
+      maxOrders: Infinity,
+      maxItemsPerOrder: Infinity,
+      hasAI: false, // unused
+      hasInvoice: true,
+      hasCharts: true,
+      hasExport: true,
+      hasWhatsApp: true,
+    },
+    features: [
+      { label: "Commandes illimitées", included: true },
+      { label: "Articles illimités par commande", included: true },
+      { label: "KPIs du tableau de bord", included: true },
+      { label: "Recherche et filtres", included: true },
+      { label: "Envoi WhatsApp automatique", included: true },
+      { label: "Graphiques et analytics avancés", included: true },
+      { label: "Génération de factures PDF", included: true },
+      { label: "Export CSV des commandes", included: true },
+    ],
+  },
+};
