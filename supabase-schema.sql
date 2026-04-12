@@ -12,6 +12,7 @@ CREATE TABLE orders (
   client     VARCHAR(255) NOT NULL,
   phone      VARCHAR(30) DEFAULT '',
   email      VARCHAR(255) DEFAULT '',
+  address    VARCHAR(255) DEFAULT '',
   payment    VARCHAR(50) NOT NULL,
   status     VARCHAR(50) NOT NULL DEFAULT 'pending',
   notes      TEXT DEFAULT '',

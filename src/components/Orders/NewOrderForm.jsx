@@ -6,7 +6,7 @@ import {
   Lock, Plus, X, User, Phone, Mail, ShoppingBag,
   CreditCard, ChevronRight, ChevronLeft,
   Smartphone, Banknote, Building2, Wallet,
-  Check, Trash2, ArrowRight,
+  Check, Trash2, ArrowRight, MapPin,
 } from "lucide-react";
 
 // ─── Constants ───
@@ -265,6 +265,32 @@ function StepClient({ draft, updateField, errors, clearError, showSuggestions, s
               style={inputWithIcon}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Adresse de livraison */}
+      <div style={{ marginTop: 16 }}>
+        <label style={{
+          display: "block", fontSize: 12, fontWeight: 600,
+          color: COLORS.textSecondary, marginBottom: 6,
+        }}>
+          Adresse de livraison <span style={{ fontSize: 10, color: COLORS.textPlaceholder, fontWeight: 500 }}>(optionnel)</span>
+        </label>
+        <div style={{ position: "relative" }}>
+          <span style={{
+            position: "absolute", left: 13, top: "50%", transform: "translateY(-50%)",
+            color: COLORS.textPlaceholder, display: "flex", pointerEvents: "none",
+          }}>
+            <MapPin size={15} />
+          </span>
+          <input
+            placeholder="Ex: Médina, Rue 21, Dakar"
+            value={draft.address}
+            onChange={(e) => updateField("address", e.target.value)}
+            onFocus={applyFocus}
+            onBlur={(e) => applyBlur(e)}
+            style={inputWithIcon}
+          />
         </div>
       </div>
     </div>
@@ -572,7 +598,7 @@ function StepPayment({ draft, updateField, errors, clearError, isMobile }) {
       </label>
       <textarea
         rows={3}
-        placeholder="Instructions spéciales, adresse de livraison, remarques..."
+        placeholder="Instructions spéciales, remarques..."
         value={draft.notes}
         onChange={(e) => updateField("notes", e.target.value)}
         style={{
@@ -615,6 +641,15 @@ function StepPayment({ draft, updateField, errors, clearError, isMobile }) {
               {draft.phone || "—"}
             </span>
           </div>
+          {/* Address */}
+          {draft.address && (
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
+              <span style={{ fontSize: 12.5, color: COLORS.textMuted }}>Livraison</span>
+              <span style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.text }}>
+                {draft.address}
+              </span>
+            </div>
+          )}
           {/* Articles */}
           <div style={{
             borderTop: `1px dashed ${COLORS.borderLight}`,

@@ -107,6 +107,7 @@ export default function generateInvoice(order, settings, isPro = false) {
   <div class="client-name">${order.client}</div>
   <div style="font-size:13px;color:#8C8279">${order.phone}</div>
   ${order.email ? `<div style="font-size:13px;color:#8C8279">${order.email}</div>` : ""}
+  ${order.address ? `<div style="font-size:13px;color:#8C8279;margin-top:6px"><strong>Adresse de livraison :</strong> ${order.address}</div>` : ""}
   ${order.payment ? `<div style="font-size:13px;color:#8C8279;margin-top:6px"><strong>Paiement :</strong> ${PAYMENT_METHODS[order.payment] || order.payment}</div>` : ""}
 </div>
 

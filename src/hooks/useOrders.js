@@ -74,6 +74,7 @@ export default function useOrders() {
         client: draft.client,
         phone: draft.phone || "",
         email: draft.email || "",
+        address: draft.address || "",
         payment: draft.payment,
         notes: draft.notes || "",
         status: "pending",

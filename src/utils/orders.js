@@ -27,6 +27,7 @@ export function createBlankOrder() {
     client: "",
     phone: "",
     email: "",
+    address: "",
     payment: "",
     items: [{ name: "", qty: 1, price: "" }],
     notes: "",
