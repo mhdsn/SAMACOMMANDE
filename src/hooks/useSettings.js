@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { supabase } from "../services/supabase";
 
 const DEFAULT_SETTINGS = {
@@ -36,23 +36,32 @@ function deepEqual(a, b) {
 export default function useSettings(userId) {
   const [saved, setSaved] = useState(DEFAULT_SETTINGS);
   const [draft, setDraft] = useState(DEFAULT_SETTINGS);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Load settings from Supabase when user changes
+  // Track whether a row exists in user_settings for this user
+  const rowExistsRef = useRef(false);
+
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
+
   useEffect(() => {
     if (!userId) return;
 
     async function load() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_settings")
         .select("settings")
         .eq("user_id", userId)
-        .single();
+        .maybeSingle();
 
       if (data?.settings) {
+        rowExistsRef.current = true;
         const merged = mergeSettings(data.settings);
         setSaved(merged);
         setDraft(merged);
       } else {
+        rowExistsRef.current = false;
         setSaved(DEFAULT_SETTINGS);
         setDraft(DEFAULT_SETTINGS);
       }
@@ -71,24 +80,43 @@ export default function useSettings(userId) {
   }, []);
 
   const saveSettings = useCallback(async () => {
-    if (!userId) return;
+    if (!userId) return false;
 
-    const { error } = await supabase
-      .from("user_settings")
-      .upsert({
-        user_id: userId,
-        settings: draft,
-      });
+    const currentDraft = draftRef.current;
+    setSaving(true);
+    setErrorMsg("");
+
+    let error;
+
+    if (rowExistsRef.current) {
+      // Row exists — UPDATE
+      ({ error } = await supabase
+        .from("user_settings")
+        .update({ settings: currentDraft })
+        .eq("user_id", userId));
+    } else {
+      // No row yet — INSERT
+      ({ error } = await supabase
+        .from("user_settings")
+        .insert({ user_id: userId, settings: currentDraft }));
+    }
+
+    setSaving(false);
 
     if (!error) {
-      setSaved(draft);
+      rowExistsRef.current = true;
+      setSaved(currentDraft);
+      return true;
     } else {
-      console.error("Erreur sauvegarde paramètres:", error.message);
+      console.error("Erreur sauvegarde paramètres:", error.message, error);
+      setErrorMsg(error.message);
+      return false;
     }
-  }, [draft, userId]);
+  }, [userId]);
 
   const discardChanges = useCallback(() => {
     setDraft(saved);
+    setErrorMsg("");
   }, [saved]);
 
   const resetSettings = useCallback(async () => {
@@ -99,6 +127,7 @@ export default function useSettings(userId) {
       .delete()
       .eq("user_id", userId);
 
+    rowExistsRef.current = false;
     setSaved(DEFAULT_SETTINGS);
     setDraft(DEFAULT_SETTINGS);
   }, [userId]);
@@ -107,6 +136,8 @@ export default function useSettings(userId) {
     settings: saved,
     draft,
     hasChanges,
+    saving,
+    errorMsg,
     updateDraft,
     saveSettings,
     discardChanges,

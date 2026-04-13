@@ -62,6 +62,8 @@ export default function App() {
     settings,
     draft: settingsDraft,
     hasChanges: settingsChanged,
+    saving: settingsSaving,
+    errorMsg: settingsError,
     updateDraft: updateSettingsDraft,
     saveSettings,
     discardChanges: discardSettings,
@@ -242,6 +244,8 @@ export default function App() {
             <SettingsPage
               draft={settingsDraft}
               hasChanges={settingsChanged}
+              saving={settingsSaving}
+              errorMsg={settingsError}
               onUpdate={updateSettingsDraft}
               onSave={saveSettings}
               onDiscard={discardSettings}

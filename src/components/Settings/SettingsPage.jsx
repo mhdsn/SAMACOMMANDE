@@ -2,12 +2,9 @@ import { useRef, useState } from "react";
 import { COLORS, SHADOWS } from "../../constants/theme";
 import { UpgradeBanner } from "../UI";
 import {
-  Building2,
-  FileText,
-  Palette,
-  AlertTriangle,
-  Upload,
-  Trash2,
+  Building2, FileText, Palette, AlertTriangle,
+  Upload, Trash2, Save, X, Check, Loader2,
+  Phone, Mail, MapPin, Hash, Eye,
 } from "lucide-react";
 
 const ACCENT_PRESETS = [
@@ -31,6 +28,51 @@ function normalizeHex(raw) {
   return v.slice(0, 7);
 }
 
+// ─── Styled Input ───
+function StyledInput({ value, onChange, placeholder, type = "text", icon: Icon, ...rest }) {
+  return (
+    <div style={{ position: "relative" }}>
+      {Icon && (
+        <span style={{
+          position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)",
+          color: COLORS.textPlaceholder, display: "flex", pointerEvents: "none",
+        }}>
+          <Icon size={15} />
+        </span>
+      )}
+      <input
+        type={type}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        style={{
+          width: "100%",
+          padding: Icon ? "12px 14px 12px 40px" : "12px 14px",
+          borderRadius: 12,
+          border: `1.5px solid ${COLORS.border}`,
+          fontSize: 14,
+          outline: "none",
+          background: COLORS.surface,
+          color: COLORS.text,
+          fontFamily: "inherit",
+          transition: "border-color 0.2s, box-shadow 0.2s",
+          boxSizing: "border-box",
+        }}
+        onFocus={(e) => {
+          e.target.style.borderColor = COLORS.accent;
+          e.target.style.boxShadow = `0 0 0 3px ${COLORS.accentSubtle}`;
+        }}
+        onBlur={(e) => {
+          e.target.style.borderColor = COLORS.border;
+          e.target.style.boxShadow = "none";
+        }}
+        {...rest}
+      />
+    </div>
+  );
+}
+
+// ─── Color Code Input ───
 function ColorCodeInput({ value, onChange, label }) {
   const [editing, setEditing] = useState(false);
   const [localValue, setLocalValue] = useState(value);
@@ -39,23 +81,13 @@ function ColorCodeInput({ value, onChange, label }) {
   const handleChange = (e) => {
     const normalized = normalizeHex(e.target.value);
     setLocalValue(normalized);
-    if (isValidHex(normalized)) {
-      onChange(normalized);
-    }
+    if (isValidHex(normalized)) onChange(normalized);
   };
 
-  const handleFocus = (e) => {
-    setEditing(true);
-    setLocalValue(value);
-    e.target.style.borderColor = COLORS.accent;
-    e.target.style.boxShadow = `0 0 0 3px ${COLORS.accentSubtle}`;
-  };
-
-  const handleBlur = (e) => {
+  const handleFocus = () => { setEditing(true); setLocalValue(value); };
+  const handleBlur = () => {
     setEditing(false);
     if (!isValidHex(localValue)) setLocalValue(value);
-    e.target.style.borderColor = !valid && editing ? COLORS.danger : COLORS.border;
-    e.target.style.boxShadow = "none";
   };
 
   const displayValue = editing ? localValue : value;
@@ -69,21 +101,18 @@ function ColorCodeInput({ value, onChange, label }) {
       )}
       <div style={{
         display: "flex", alignItems: "center", gap: 10,
-        padding: "6px 10px",
-        borderRadius: 12,
+        padding: "6px 10px", borderRadius: 12,
         border: `1.5px solid ${COLORS.border}`,
-        background: COLORS.bg,
-        maxWidth: 220,
+        background: COLORS.surface, maxWidth: 220,
+        transition: "border-color 0.2s",
       }}>
-        {/* Color swatch synced with the picker */}
         <label style={{ display: "flex", cursor: "pointer", flexShrink: 0 }}>
           <div style={{
             width: 32, height: 32, borderRadius: 8,
             background: valid ? displayValue : value,
             border: `2px solid ${COLORS.borderLight}`,
             transition: "background 0.15s ease",
-            position: "relative",
-            overflow: "hidden",
+            position: "relative", overflow: "hidden",
           }}>
             <input
               type="color"
@@ -97,8 +126,6 @@ function ColorCodeInput({ value, onChange, label }) {
             />
           </div>
         </label>
-
-        {/* Hex text input */}
         <input
           type="text"
           value={displayValue}
@@ -108,28 +135,19 @@ function ColorCodeInput({ value, onChange, label }) {
           maxLength={7}
           placeholder="#000000"
           style={{
-            flex: 1,
-            padding: "6px 0",
-            border: "none",
-            outline: "none",
-            fontSize: 14,
-            fontWeight: 600,
+            flex: 1, padding: "6px 0", border: "none", outline: "none",
+            fontSize: 14, fontWeight: 600,
             fontFamily: "'SF Mono', 'Fira Code', 'Consolas', monospace",
-            letterSpacing: 0.5,
-            background: "transparent",
+            letterSpacing: 0.5, background: "transparent",
             color: valid ? COLORS.text : COLORS.danger,
-            textTransform: "uppercase",
-            minWidth: 0,
+            textTransform: "uppercase", minWidth: 0,
           }}
         />
-
-        {/* Validity indicator */}
         {editing && (
           <div style={{
             width: 8, height: 8, borderRadius: "50%",
             background: valid ? COLORS.success : COLORS.danger,
-            flexShrink: 0,
-            transition: "background 0.15s ease",
+            flexShrink: 0, transition: "background 0.15s ease",
           }} />
         )}
       </div>
@@ -142,51 +160,54 @@ function ColorCodeInput({ value, onChange, label }) {
   );
 }
 
-function SectionCard({ title, icon, children, isMobile, actions }) {
+// ─── Section Card ───
+function SectionCard({ title, subtitle, icon, children, isMobile, danger }) {
+  const accentColor = danger ? COLORS.danger : COLORS.accent;
   return (
-    <div
-      style={{
-        background: COLORS.surface,
-        borderRadius: 18,
-        border: `1px solid ${COLORS.borderLight}`,
-        boxShadow: SHADOWS.xs,
-        marginBottom: isMobile ? 16 : 20,
-        overflow: "hidden",
-      }}
-    >
-      <div
-        style={{
-          padding: isMobile ? "16px 18px" : "20px 28px",
-          borderBottom: `1px solid ${COLORS.borderLight}`,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 10,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ display: "flex", color: COLORS.accent }}>{icon}</span>
-          <h3 style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.3 }}>{title}</h3>
+    <div style={{
+      background: COLORS.surface,
+      borderRadius: 20,
+      border: `1px solid ${danger ? COLORS.danger + "20" : COLORS.borderLight}`,
+      boxShadow: SHADOWS.sm,
+      marginBottom: isMobile ? 16 : 22,
+      overflow: "hidden",
+      transition: "box-shadow 0.2s",
+    }}>
+      <div style={{
+        padding: isMobile ? "18px 20px" : "22px 28px",
+        borderBottom: `1px solid ${COLORS.borderLight}`,
+        display: "flex", alignItems: "center", gap: 12,
+      }}>
+        <div style={{
+          width: 38, height: 38, borderRadius: 11,
+          background: danger ? COLORS.dangerLight : COLORS.accentSubtle,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: accentColor, flexShrink: 0,
+        }}>
+          {icon}
         </div>
-        {actions && <div style={{ display: "flex", gap: 8 }}>{actions}</div>}
+        <div>
+          <h3 style={{ fontSize: 16, fontWeight: 700, letterSpacing: -0.3, margin: 0 }}>{title}</h3>
+          {subtitle && (
+            <p style={{ fontSize: 12, color: COLORS.textMuted, margin: "2px 0 0" }}>{subtitle}</p>
+          )}
+        </div>
       </div>
-      <div style={{ padding: isMobile ? "18px 18px" : "24px 28px" }}>{children}</div>
+      <div style={{ padding: isMobile ? "20px 20px" : "24px 28px" }}>{children}</div>
     </div>
   );
 }
 
+// ─── Field Row ───
 function FieldRow({ label, sub, children, isMobile }) {
   return (
-    <div
-      style={{
-        display: isMobile ? "block" : "flex",
-        alignItems: "flex-start",
-        gap: 20,
-        marginBottom: 20,
-      }}
-    >
-      <div style={{ minWidth: isMobile ? "auto" : 160, marginBottom: isMobile ? 8 : 0 }}>
-        <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>{label}</div>
+    <div style={{
+      display: isMobile ? "block" : "flex",
+      alignItems: "flex-start", gap: 24,
+      marginBottom: 22,
+    }}>
+      <div style={{ minWidth: isMobile ? "auto" : 170, marginBottom: isMobile ? 8 : 0, paddingTop: isMobile ? 0 : 8 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.text }}>{label}</div>
         {sub && <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>{sub}</div>}
       </div>
       <div style={{ flex: 1 }}>{children}</div>
@@ -194,133 +215,47 @@ function FieldRow({ label, sub, children, isMobile }) {
   );
 }
 
-function StyledInput({ value, onChange, placeholder, type = "text", ...rest }) {
-  return (
-    <input
-      type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      style={{
-        width: "100%",
-        padding: "11px 14px",
-        borderRadius: 11,
-        border: `1.5px solid ${COLORS.border}`,
-        fontSize: 14,
-        outline: "none",
-        background: COLORS.bg,
-        color: COLORS.text,
-        fontFamily: "inherit",
-        transition: "border-color 0.2s, box-shadow 0.2s",
-      }}
-      onFocus={(e) => {
-        e.target.style.borderColor = COLORS.accent;
-        e.target.style.boxShadow = `0 0 0 3px ${COLORS.accentSubtle}`;
-      }}
-      onBlur={(e) => {
-        e.target.style.borderColor = COLORS.border;
-        e.target.style.boxShadow = "none";
-      }}
-      {...rest}
-    />
-  );
-}
-
-function SaveButton({ onClick, disabled, label = "Sauvegarder" }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: "8px 20px",
-        borderRadius: 10,
-        background: disabled
-          ? COLORS.surfaceAlt
-          : `linear-gradient(135deg, ${COLORS.accent}, ${COLORS.accentDark})`,
-        color: disabled ? COLORS.textPlaceholder : "#fff",
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: disabled ? "default" : "pointer",
-        boxShadow: disabled ? "none" : SHADOWS.accent,
-        transition: "all 0.15s",
-        border: "none",
-      }}
-    >
-      {label}
-    </button>
-  );
-}
-
-function CancelButton({ onClick, disabled }) {
-  if (disabled) return null;
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        padding: "8px 16px",
-        borderRadius: 10,
-        background: COLORS.surfaceAlt,
-        color: COLORS.textMuted,
-        fontSize: 13,
-        fontWeight: 600,
-        cursor: "pointer",
-        border: "none",
-      }}
-    >
-      Annuler
-    </button>
-  );
-}
-
+// ─── Pro Locked Overlay ───
 function ProLockedOverlay({ children, isPro, onUpgrade, title, description, icon }) {
   if (isPro) return children;
   return (
     <div style={{ position: "relative" }}>
       <div style={{ filter: "blur(4px)", opacity: 0.4, pointerEvents: "none" }}>{children}</div>
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 2,
-        }}
-      >
+      <div style={{
+        position: "absolute", inset: 0,
+        display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2,
+      }}>
         <UpgradeBanner icon={icon} title={title} description={description} onUpgrade={onUpgrade} compact />
       </div>
     </div>
   );
 }
 
+// ─── Toast ───
 function SavedToast({ visible }) {
   if (!visible) return null;
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: 32,
-        left: "50%",
-        transform: "translateX(-50%)",
-        padding: "12px 28px",
-        borderRadius: 14,
-        background: COLORS.success,
-        color: "#fff",
-        fontSize: 14,
-        fontWeight: 600,
-        boxShadow: SHADOWS.lg,
-        zIndex: 1000,
-        animation: "fadeInUp 0.25s ease",
-      }}
-    >
-      Paramètres sauvegardés
+    <div style={{
+      position: "fixed", bottom: 32, left: "50%", transform: "translateX(-50%)",
+      padding: "12px 24px", borderRadius: 14,
+      background: COLORS.success, color: "#fff",
+      fontSize: 14, fontWeight: 600,
+      boxShadow: SHADOWS.lg, zIndex: 1000,
+      animation: "fadeInUp 0.25s ease",
+      display: "flex", alignItems: "center", gap: 8,
+    }}>
+      <Check size={16} strokeWidth={2.5} />
+      Parametres sauvegardes
     </div>
   );
 }
 
+// ─── Main ───
 export default function SettingsPage({
   draft,
   hasChanges,
+  saving,
+  errorMsg,
   onUpdate,
   onSave,
   onDiscard,
@@ -332,10 +267,12 @@ export default function SettingsPage({
   const logoInputRef = useRef(null);
   const [showToast, setShowToast] = useState(false);
 
-  const handleSave = () => {
-    onSave();
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 2000);
+  const handleSave = async () => {
+    const success = await onSave();
+    if (success) {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2500);
+    }
   };
 
   const handleLogoUpload = (e) => {
@@ -346,9 +283,7 @@ export default function SettingsPage({
       return;
     }
     const reader = new FileReader();
-    reader.onload = (ev) => {
-      onUpdate("invoice", { logo: ev.target.result });
-    };
+    reader.onload = (ev) => onUpdate("invoice", { logo: ev.target.result });
     reader.readAsDataURL(file);
   };
 
@@ -357,93 +292,136 @@ export default function SettingsPage({
     if (logoInputRef.current) logoInputRef.current.value = "";
   };
 
-  const saveActions = (
-    <>
-      <CancelButton onClick={onDiscard} disabled={!hasChanges} />
-      <SaveButton onClick={handleSave} disabled={!hasChanges} />
-    </>
-  );
-
   return (
-    <div style={{ maxWidth: 760, margin: "0 auto" }}>
+    <div style={{ maxWidth: 740, margin: "0 auto", paddingBottom: hasChanges ? 90 : 20 }}>
       <SavedToast visible={showToast} />
 
-      {hasChanges && (
-        <div
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 50,
-            marginBottom: 16,
-            padding: "12px 20px",
-            borderRadius: 14,
-            background: COLORS.surface,
-            border: `1.5px solid ${COLORS.accent}33`,
-            boxShadow: SHADOWS.md,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 12,
-            animation: "fadeInUp 0.2s ease",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: COLORS.warning, flexShrink: 0 }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>
-              Modifications non sauvegardées
-            </span>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <CancelButton onClick={onDiscard} disabled={false} />
-            <SaveButton onClick={handleSave} disabled={false} />
-          </div>
-        </div>
-      )}
-
-      <SectionCard title="Entreprise" icon={<Building2 size={18} />} isMobile={isMobile} actions={saveActions}>
-        <FieldRow label="Nom" sub="Affiché sur vos factures" isMobile={isMobile}>
-          <StyledInput value={draft.company.name} onChange={(e) => onUpdate("company", { name: e.target.value })} placeholder="Ex: Diallo Services" />
+      {/* ═══ Entreprise ═══ */}
+      <SectionCard
+        title="Entreprise"
+        subtitle="Informations affichees sur vos factures"
+        icon={<Building2 size={18} />}
+        isMobile={isMobile}
+      >
+        <FieldRow label="Nom" sub="Raison sociale" isMobile={isMobile}>
+          <StyledInput
+            value={draft.company.name}
+            onChange={(e) => onUpdate("company", { name: e.target.value })}
+            placeholder="Ex: Diallo Services"
+            icon={Building2}
+          />
         </FieldRow>
         <FieldRow label="Adresse" isMobile={isMobile}>
-          <StyledInput value={draft.company.address} onChange={(e) => onUpdate("company", { address: e.target.value })} placeholder="Ex: Médina, Dakar, Sénégal" />
+          <StyledInput
+            value={draft.company.address}
+            onChange={(e) => onUpdate("company", { address: e.target.value })}
+            placeholder="Ex: Medina, Dakar, Senegal"
+            icon={MapPin}
+          />
         </FieldRow>
-        <FieldRow label="NINEA" sub="Numéro d'identification" isMobile={isMobile}>
-          <StyledInput value={draft.company.ninea} onChange={(e) => onUpdate("company", { ninea: e.target.value })} placeholder="Ex: 005 234 567 2G3" />
+        <FieldRow label="NINEA" sub="Numero d'identification" isMobile={isMobile}>
+          <StyledInput
+            value={draft.company.ninea}
+            onChange={(e) => onUpdate("company", { ninea: e.target.value })}
+            placeholder="Ex: 005 234 567 2G3"
+            icon={Hash}
+          />
         </FieldRow>
-        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-          <FieldRow label="Téléphone" isMobile={isMobile}>
-            <StyledInput value={draft.company.phone} onChange={(e) => onUpdate("company", { phone: e.target.value })} placeholder="Ex: 77 123 45 67" type="tel" />
-          </FieldRow>
-          <FieldRow label="Email" isMobile={isMobile}>
-            <StyledInput value={draft.company.email} onChange={(e) => onUpdate("company", { email: e.target.value })} placeholder="contact@entreprise.sn" type="email" />
-          </FieldRow>
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+          gap: 16,
+        }}>
+          <div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.text, marginBottom: 8 }}>Telephone</div>
+            <StyledInput
+              value={draft.company.phone}
+              onChange={(e) => onUpdate("company", { phone: e.target.value })}
+              placeholder="Ex: 77 123 45 67"
+              type="tel"
+              icon={Phone}
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.text, marginBottom: 8 }}>Email</div>
+            <StyledInput
+              value={draft.company.email}
+              onChange={(e) => onUpdate("company", { email: e.target.value })}
+              placeholder="contact@entreprise.sn"
+              type="email"
+              icon={Mail}
+            />
+          </div>
         </div>
       </SectionCard>
 
-      <SectionCard title="Personnalisation de la facture" icon={<FileText size={18} />} isMobile={isMobile} actions={isPro ? saveActions : null}>
-        <ProLockedOverlay isPro={isPro} onUpgrade={onUpgrade} icon={<FileText size={18} />} title="Factures personnalisées — Pro" description="Ajoutez votre logo, changez les couleurs et personnalisez vos factures.">
+      {/* ═══ Facture ═══ */}
+      <SectionCard
+        title="Personnalisation de la facture"
+        subtitle="Logo, couleurs et mentions de vos factures"
+        icon={<FileText size={18} />}
+        isMobile={isMobile}
+      >
+        <ProLockedOverlay
+          isPro={isPro}
+          onUpgrade={onUpgrade}
+          icon={<FileText size={18} />}
+          title="Factures personnalisees — Pro"
+          description="Ajoutez votre logo, changez les couleurs et personnalisez vos factures."
+        >
+          {/* Logo */}
           <FieldRow label="Logo" sub="PNG ou JPG, max 500 Ko" isMobile={isMobile}>
             <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
               {draft.invoice.logo ? (
-                <div style={{ width: 80, height: 80, borderRadius: 14, border: `2px solid ${COLORS.border}`, overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, flexShrink: 0 }}>
+                <div style={{
+                  width: 80, height: 80, borderRadius: 14,
+                  border: `2px solid ${COLORS.border}`,
+                  overflow: "hidden", display: "flex", alignItems: "center",
+                  justifyContent: "center", background: COLORS.bg, flexShrink: 0,
+                }}>
                   <img src={draft.invoice.logo} alt="Logo" style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
                 </div>
               ) : (
-                <div style={{ width: 80, height: 80, borderRadius: 14, border: `2px dashed ${COLORS.border}`, display: "flex", alignItems: "center", justifyContent: "center", background: COLORS.bg, flexShrink: 0, color: COLORS.textPlaceholder }}>
+                <div style={{
+                  width: 80, height: 80, borderRadius: 14,
+                  border: `2px dashed ${COLORS.border}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  background: COLORS.bg, flexShrink: 0, color: COLORS.textPlaceholder,
+                }}>
                   <Upload size={28} strokeWidth={1.5} />
                 </div>
               )}
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                 <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/svg+xml" onChange={handleLogoUpload} style={{ display: "none" }} />
                 <button
+                  type="button"
                   onClick={() => logoInputRef.current?.click()}
-                  style={{ padding: "9px 20px", borderRadius: 10, background: COLORS.accentSubtle, color: COLORS.accent, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1.5px solid ${COLORS.accent}33`, display: "flex", alignItems: "center", gap: 6 }}
+                  style={{
+                    padding: "10px 20px", borderRadius: 12,
+                    background: COLORS.accentSubtle, color: COLORS.accent,
+                    fontSize: 13, fontWeight: 600, cursor: "pointer",
+                    border: `1.5px solid ${COLORS.accent}30`,
+                    display: "flex", alignItems: "center", gap: 6,
+                    fontFamily: "inherit", transition: "all 0.15s",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = COLORS.accent; e.currentTarget.style.color = "#fff"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = COLORS.accentSubtle; e.currentTarget.style.color = COLORS.accent; }}
                 >
                   <Upload size={14} />
                   {draft.invoice.logo ? "Changer le logo" : "Importer un logo"}
                 </button>
                 {draft.invoice.logo && (
-                  <button onClick={handleRemoveLogo} style={{ padding: "7px 16px", borderRadius: 8, background: COLORS.dangerLight, color: COLORS.danger, fontSize: 12, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    style={{
+                      padding: "8px 16px", borderRadius: 10,
+                      background: COLORS.dangerLight, color: COLORS.danger,
+                      fontSize: 12, fontWeight: 600, cursor: "pointer",
+                      display: "flex", alignItems: "center", gap: 5,
+                      border: "none", fontFamily: "inherit",
+                    }}
+                  >
                     <Trash2 size={12} /> Supprimer
                   </button>
                 )}
@@ -451,6 +429,7 @@ export default function SettingsPage({
             </div>
           </FieldRow>
 
+          {/* Couleur */}
           <FieldRow label="Couleur d'accent" sub="Couleur principale de la facture" isMobile={isMobile}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               {ACCENT_PRESETS.map((p) => {
@@ -458,9 +437,15 @@ export default function SettingsPage({
                 return (
                   <button
                     key={p.color}
+                    type="button"
                     onClick={() => onUpdate("invoice", { accentColor: p.color })}
                     title={p.label}
-                    style={{ width: 36, height: 36, borderRadius: 10, background: p.color, border: active ? "3px solid #1A1612" : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s, border 0.15s", boxShadow: SHADOWS.sm }}
+                    style={{
+                      width: 36, height: 36, borderRadius: 10, background: p.color,
+                      border: active ? `3px solid ${COLORS.text}` : "3px solid transparent",
+                      cursor: "pointer", transition: "transform 0.15s, border 0.15s",
+                      boxShadow: active ? `0 0 0 2px ${COLORS.surface}, 0 0 0 4px ${p.color}` : SHADOWS.sm,
+                    }}
                     onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
                     onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   />
@@ -474,10 +459,24 @@ export default function SettingsPage({
             />
           </FieldRow>
 
-          <FieldRow label="Échéance" sub="Facultatif — délai de paiement" isMobile={isMobile}>
-            <select value={draft.invoice.paymentTerms} onChange={(e) => onUpdate("invoice", { paymentTerms: e.target.value })} style={{ width: "100%", padding: "11px 14px", borderRadius: 11, border: `1.5px solid ${COLORS.border}`, fontSize: 14, outline: "none", background: COLORS.bg, color: draft.invoice.paymentTerms ? COLORS.text : COLORS.textPlaceholder, fontFamily: "inherit", cursor: "pointer" }}>
-              <option value="">Aucune échéance</option>
-              <option value="À réception">À réception</option>
+          {/* Echeance */}
+          <FieldRow label="Echeance" sub="Delai de paiement" isMobile={isMobile}>
+            <select
+              value={draft.invoice.paymentTerms}
+              onChange={(e) => onUpdate("invoice", { paymentTerms: e.target.value })}
+              style={{
+                width: "100%", padding: "12px 14px", borderRadius: 12,
+                border: `1.5px solid ${COLORS.border}`, fontSize: 14, outline: "none",
+                background: COLORS.surface,
+                color: draft.invoice.paymentTerms ? COLORS.text : COLORS.textPlaceholder,
+                fontFamily: "inherit", cursor: "pointer",
+                transition: "border-color 0.2s",
+              }}
+              onFocus={(e) => { e.target.style.borderColor = COLORS.accent; }}
+              onBlur={(e) => { e.target.style.borderColor = COLORS.border; }}
+            >
+              <option value="">Aucune echeance</option>
+              <option value="A reception">A reception</option>
               <option value="7 jours">7 jours</option>
               <option value="15 jours">15 jours</option>
               <option value="30 jours">30 jours</option>
@@ -485,49 +484,102 @@ export default function SettingsPage({
             </select>
           </FieldRow>
 
+          {/* Pied de page */}
           <FieldRow label="Pied de page" sub="Message en bas de facture" isMobile={isMobile}>
-            <StyledInput value={draft.invoice.footerText} onChange={(e) => onUpdate("invoice", { footerText: e.target.value })} placeholder="Merci pour votre confiance" />
+            <StyledInput
+              value={draft.invoice.footerText}
+              onChange={(e) => onUpdate("invoice", { footerText: e.target.value })}
+              placeholder="Merci pour votre confiance"
+            />
           </FieldRow>
 
-          <div style={{ marginTop: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: COLORS.textMuted, marginBottom: 10 }}>Aperçu de l'en-tête</div>
-            <div style={{ padding: "20px 24px", borderRadius: 14, border: `1.5px solid ${COLORS.borderLight}`, background: "#fff", display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          {/* Apercu */}
+          <div style={{
+            marginTop: 8, padding: "16px 20px", borderRadius: 16,
+            background: COLORS.bg, border: `1px solid ${COLORS.borderLight}`,
+          }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 6,
+              fontSize: 11, fontWeight: 700, color: COLORS.textPlaceholder,
+              textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 12,
+            }}>
+              <Eye size={12} />
+              Apercu de la facture
+            </div>
+            <div style={{
+              padding: "20px 24px", borderRadius: 14,
+              border: `1.5px solid ${COLORS.borderLight}`,
+              background: "#fff",
+              display: "flex", justifyContent: "space-between", alignItems: "flex-start",
+            }}>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 {draft.invoice.logo ? (
                   <img src={draft.invoice.logo} alt="Logo" style={{ width: 48, height: 48, objectFit: "contain", borderRadius: 8 }} />
                 ) : (
-                  <div style={{ width: 48, height: 48, borderRadius: 8, background: draft.invoice.accentColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 20, fontWeight: 800 }}>
+                  <div style={{
+                    width: 48, height: 48, borderRadius: 10,
+                    background: draft.invoice.accentColor,
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "#fff", fontSize: 20, fontWeight: 800,
+                  }}>
                     {(draft.company.name || "G")[0].toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: draft.invoice.accentColor }}>{draft.company.name || "Votre Entreprise"}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: draft.invoice.accentColor }}>
+                    {draft.company.name || "Votre Entreprise"}
+                  </div>
                   <div style={{ fontSize: 11, color: "#8C8279" }}>
-                    {draft.company.address || "Dakar, Sénégal"}
+                    {draft.company.address || "Dakar, Senegal"}
                     {draft.company.ninea && ` · NINEA ${draft.company.ninea}`}
                   </div>
                 </div>
               </div>
               <div style={{ textAlign: "right" }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: draft.invoice.accentColor }}>FACTURE #0001</div>
-                {draft.invoice.paymentTerms && <div style={{ fontSize: 11, color: "#8C8279" }}>Échéance : {draft.invoice.paymentTerms}</div>}
+                {draft.invoice.paymentTerms && (
+                  <div style={{ fontSize: 11, color: "#8C8279" }}>Echeance : {draft.invoice.paymentTerms}</div>
+                )}
               </div>
             </div>
-            <div style={{ marginTop: 8, padding: "10px 24px", borderRadius: 10, border: `1px solid ${COLORS.borderLight}`, background: "#fff", fontSize: 12, color: "#8C8279", textAlign: "center", borderTop: `2px solid ${draft.invoice.accentColor}` }}>
+            <div style={{
+              marginTop: 8, padding: "10px 24px", borderRadius: 10,
+              border: `1px solid ${COLORS.borderLight}`, background: "#fff",
+              fontSize: 12, color: "#8C8279", textAlign: "center",
+              borderTop: `2px solid ${draft.invoice.accentColor}`,
+            }}>
               {draft.invoice.footerText || "Merci pour votre confiance"}
             </div>
           </div>
         </ProLockedOverlay>
       </SectionCard>
 
-      <SectionCard title="Apparence de l'application" icon={<Palette size={18} />} isMobile={isMobile} actions={isPro ? saveActions : null}>
-        <ProLockedOverlay isPro={isPro} onUpgrade={onUpgrade} icon={<Palette size={18} />} title="Thème personnalisé — Pro" description="Changez les couleurs de l'interface pour correspondre à votre marque.">
+      {/* ═══ Apparence ═══ */}
+      <SectionCard
+        title="Apparence de l'application"
+        subtitle="Personnalisez les couleurs de l'interface"
+        icon={<Palette size={18} />}
+        isMobile={isMobile}
+      >
+        <ProLockedOverlay
+          isPro={isPro}
+          onUpgrade={onUpgrade}
+          icon={<Palette size={18} />}
+          title="Theme personnalise — Pro"
+          description="Changez les couleurs de l'interface pour correspondre a votre marque."
+        >
           <FieldRow label="Couleur principale" sub="Modifie l'accent de l'interface" isMobile={isMobile}>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
               <button
+                type="button"
                 onClick={() => onUpdate("theme", { accentColor: "" })}
-                style={{ width: 36, height: 36, borderRadius: 10, background: `linear-gradient(135deg, #D4622B, #B8501F)`, border: !draft.theme.accentColor ? "3px solid #1A1612" : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s", boxShadow: SHADOWS.sm }}
-                title="Par défaut"
+                style={{
+                  width: 36, height: 36, borderRadius: 10,
+                  background: `linear-gradient(135deg, #D4622B, #B8501F)`,
+                  border: !draft.theme.accentColor ? `3px solid ${COLORS.text}` : "3px solid transparent",
+                  cursor: "pointer", transition: "transform 0.15s", boxShadow: SHADOWS.sm,
+                }}
+                title="Par defaut"
                 onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
                 onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
               />
@@ -536,9 +588,14 @@ export default function SettingsPage({
                 return (
                   <button
                     key={p.color}
+                    type="button"
                     onClick={() => onUpdate("theme", { accentColor: p.color })}
                     title={p.label}
-                    style={{ width: 36, height: 36, borderRadius: 10, background: p.color, border: active ? "3px solid #1A1612" : "3px solid transparent", cursor: "pointer", transition: "transform 0.15s", boxShadow: SHADOWS.sm }}
+                    style={{
+                      width: 36, height: 36, borderRadius: 10, background: p.color,
+                      border: active ? `3px solid ${COLORS.text}` : "3px solid transparent",
+                      cursor: "pointer", transition: "transform 0.15s", boxShadow: SHADOWS.sm,
+                    }}
                     onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.15)")}
                     onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
                   />
@@ -553,33 +610,169 @@ export default function SettingsPage({
           </FieldRow>
 
           {draft.theme.accentColor && (
-            <div style={{ padding: "14px 18px", borderRadius: 14, background: `${draft.theme.accentColor}12`, border: `1.5px solid ${draft.theme.accentColor}33`, display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: 10, background: draft.theme.accentColor, flexShrink: 0 }} />
+            <div style={{
+              padding: "14px 18px", borderRadius: 14,
+              background: `${draft.theme.accentColor}10`,
+              border: `1.5px solid ${draft.theme.accentColor}25`,
+              display: "flex", alignItems: "center", gap: 12,
+            }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 10,
+                background: draft.theme.accentColor, flexShrink: 0,
+              }} />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>Thème personnalisé actif</div>
-                <div style={{ fontSize: 12, color: COLORS.textMuted }}>Rechargez la page pour appliquer pleinement le nouveau thème.</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>Theme personnalise actif</div>
+                <div style={{ fontSize: 12, color: COLORS.textMuted }}>Rechargez la page pour appliquer le nouveau theme.</div>
               </div>
             </div>
           )}
         </ProLockedOverlay>
       </SectionCard>
 
-      <SectionCard title="Zone de danger" icon={<AlertTriangle size={18} />} isMobile={isMobile}>
-        <FieldRow label="Réinitialiser" sub="Remet tous les paramètres par défaut" isMobile={isMobile}>
+      {/* ═══ Zone de danger ═══ */}
+      <SectionCard
+        title="Zone de danger"
+        subtitle="Actions irreversibles"
+        icon={<AlertTriangle size={18} />}
+        isMobile={isMobile}
+        danger
+      >
+        <div style={{
+          display: "flex", alignItems: isMobile ? "flex-start" : "center",
+          justifyContent: "space-between",
+          flexDirection: isMobile ? "column" : "row",
+          gap: 12,
+        }}>
+          <div>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: COLORS.text }}>Reinitialiser les parametres</div>
+            <div style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>Remet tous les parametres par defaut. Cette action est irreversible.</div>
+          </div>
           <button
+            type="button"
             onClick={() => {
-              if (confirm("Réinitialiser tous les paramètres ? Cette action est irréversible.")) {
+              if (confirm("Reinitialiser tous les parametres ? Cette action est irreversible.")) {
                 onReset();
               }
             }}
-            style={{ padding: "11px 24px", borderRadius: 12, background: COLORS.dangerLight, color: COLORS.danger, fontSize: 13, fontWeight: 600, cursor: "pointer", border: `1.5px solid ${COLORS.danger}22`, transition: "all 0.15s" }}
+            style={{
+              padding: "11px 24px", borderRadius: 12,
+              background: COLORS.dangerLight, color: COLORS.danger,
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              border: `1.5px solid ${COLORS.danger}20`,
+              transition: "all 0.15s", fontFamily: "inherit",
+              whiteSpace: "nowrap", flexShrink: 0,
+            }}
             onMouseEnter={(e) => { e.currentTarget.style.background = COLORS.danger; e.currentTarget.style.color = "#fff"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = COLORS.dangerLight; e.currentTarget.style.color = COLORS.danger; }}
           >
-            Réinitialiser les paramètres
+            <span style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <Trash2 size={14} />
+              Reinitialiser
+            </span>
           </button>
-        </FieldRow>
+        </div>
       </SectionCard>
+
+      {/* ═══ Sticky Save Bar ═══ */}
+      {hasChanges && (
+        <div style={{
+          position: "fixed",
+          bottom: 0, left: 0, right: 0,
+          zIndex: 100,
+          padding: isMobile ? "12px 16px" : "14px 24px",
+          background: "rgba(255,255,255,0.92)",
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderTop: `1px solid ${COLORS.borderLight}`,
+          boxShadow: "0 -4px 20px rgba(26,22,18,0.08)",
+          animation: "fadeInUp 0.2s ease",
+        }}>
+          <div style={{
+            maxWidth: 740, margin: "0 auto",
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", gap: 12,
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: "50%",
+                  background: errorMsg ? COLORS.danger : COLORS.warning, flexShrink: 0,
+                  boxShadow: `0 0 6px ${errorMsg ? COLORS.danger : COLORS.warning}50`,
+                }} />
+                <span style={{ fontSize: 13, fontWeight: 600, color: COLORS.text }}>
+                  {errorMsg ? "Erreur de sauvegarde" : "Modifications non sauvegardees"}
+                </span>
+              </div>
+              {errorMsg && (
+                <span style={{ fontSize: 11, color: COLORS.danger, marginLeft: 18 }}>
+                  {errorMsg}
+                </span>
+              )}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                type="button"
+                onClick={onDiscard}
+                style={{
+                  padding: "10px 18px", borderRadius: 12,
+                  background: COLORS.surface, color: COLORS.textSecondary,
+                  fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  border: `1.5px solid ${COLORS.border}`,
+                  fontFamily: "inherit", transition: "all 0.15s",
+                  display: "flex", alignItems: "center", gap: 6,
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = COLORS.bg; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = COLORS.surface; }}
+              >
+                <X size={14} />
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                style={{
+                  padding: "10px 22px", borderRadius: 12,
+                  background: saving
+                    ? COLORS.surfaceAlt
+                    : `linear-gradient(135deg, ${COLORS.accent}, ${COLORS.accentDark})`,
+                  color: saving ? COLORS.textPlaceholder : "#fff",
+                  fontSize: 13, fontWeight: 700, letterSpacing: -0.2,
+                  cursor: saving ? "default" : "pointer",
+                  boxShadow: saving ? "none" : SHADOWS.accent,
+                  transition: "all 0.2s",
+                  border: "none", fontFamily: "inherit",
+                  display: "flex", alignItems: "center", gap: 7,
+                }}
+                onMouseEnter={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = SHADOWS.accentLg;
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!saving) {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = SHADOWS.accent;
+                  }
+                }}
+              >
+                {saving ? (
+                  <>
+                    <Loader2 size={15} style={{ animation: "spin 1s linear infinite" }} />
+                    Sauvegarde...
+                  </>
+                ) : (
+                  <>
+                    <Save size={15} />
+                    Sauvegarder
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
