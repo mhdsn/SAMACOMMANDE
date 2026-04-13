@@ -12,6 +12,7 @@ import {
   ArrowUp,
   Plus,
 } from "lucide-react";
+import { UpgradeBanner } from "../UI";
 
 const STYLE_ID = "ai-assistant-keyframes";
 if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
@@ -32,9 +33,9 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
 
 const ERROR_MESSAGES = {
   NO_API_KEY:
-    "Clé API manquante. Ajoutez VITE_GEMINI_API_KEY dans votre fichier .env puis redémarrez le serveur.",
+    "Clé API manquante côté serveur. Configurez ANTHROPIC_API_KEY dans les secrets Supabase.",
   INVALID_API_KEY:
-    "Clé API invalide. Vérifiez votre clé Google AI Studio dans .env.",
+    "Clé API Anthropic invalide. Vérifiez la configuration côté serveur.",
   BAD_REQUEST:
     "Requête invalide. Vérifiez que votre clé API est correcte et réessayez.",
   RATE_LIMIT:
@@ -100,7 +101,7 @@ function AssistantAvatar() {
   );
 }
 
-export default function AIAssistant({ orders, isMobile }) {
+export default function AIAssistant({ orders, isMobile, isPro, onUpgrade }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -147,6 +148,17 @@ export default function AIAssistant({ orders, isMobile }) {
   };
 
   const isEmpty = messages.length === 0 && !loading;
+
+  if (!isPro) {
+    return (
+      <UpgradeBanner
+        icon={<Sparkles size={28} />}
+        title="Assistant IA — Fonctionnalité Pro"
+        description="Analysez vos commandes, revenus et clients avec l'intelligence artificielle. Obtenez des conseils personnalisés pour développer votre activité."
+        onUpgrade={onUpgrade}
+      />
+    );
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 160px)" }}>

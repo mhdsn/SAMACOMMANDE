@@ -1,6 +1,7 @@
 import { formatCurrency, formatDate } from "../utils/format";
 import { getOrderTotal, getOrderRef } from "../utils/orders";
 import { computeStats, computeMonthlyRevenue } from "../utils/stats";
+import { supabase } from "./supabase";
 
 /**
  * Build a structured summary of all order data for the AI context.
@@ -60,51 +61,40 @@ STYLE:
 - Formate en markdown quand c'est utile (gras, listes, etc.)`;
 
 /**
- * Send a message to Gemini API with order context and streaming.
+ * Send a message via Supabase Edge Function (proxies to Anthropic API).
  */
 export async function sendMessage(messages, orders, onChunk) {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-  if (!apiKey) {
-    throw new Error("NO_API_KEY");
-  }
-
   const context = buildOrderContext(orders);
 
-  // Build Gemini conversation format
-  const contents = [];
-  for (let i = 0; i < messages.length; i++) {
-    const m = messages[i];
+  // Build messages with context injected in the last user message
+  const apiMessages = messages.map((m, i) => {
     const isLast = i === messages.length - 1;
-    contents.push({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [
-        {
-          text:
-            m.role === "user" && isLast
-              ? `${m.content}\n\n---\n${context}`
-              : m.content,
-        },
-      ],
-    });
-  }
+    return {
+      role: m.role,
+      content:
+        m.role === "user" && isLast
+          ? `${m.content}\n\n---\n${context}`
+          : m.content,
+    };
+  });
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:streamGenerateContent?alt=sse&key=${apiKey}`;
+  // Call the Edge Function — the API key stays server-side
+  const { data: { session } } = await supabase.auth.getSession();
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const url = `${supabaseUrl}/functions/v1/ai-chat`;
 
   let response;
   try {
     response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session?.access_token}`,
+        apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      },
       body: JSON.stringify({
-        system_instruction: {
-          parts: [{ text: SYSTEM_PROMPT }],
-        },
-        contents,
-        generationConfig: {
-          maxOutputTokens: 1024,
-          temperature: 0.7,
-        },
+        system: SYSTEM_PROMPT,
+        messages: apiMessages,
       }),
     });
   } catch {
@@ -112,15 +102,18 @@ export async function sendMessage(messages, orders, onChunk) {
   }
 
   if (!response.ok) {
-    const status = response.status;
-    if (status === 400) throw new Error("BAD_REQUEST");
-    if (status === 401 || status === 403) throw new Error("INVALID_API_KEY");
-    if (status === 429) throw new Error("RATE_LIMIT");
-    if (status === 500 || status === 503) throw new Error("OVERLOADED");
-    throw new Error(`API_ERROR`);
+    let code = `API_ERROR_${response.status}`;
+    try {
+      const text = await response.text();
+      console.error("Edge Function error:", response.status, text);
+      const body = JSON.parse(text);
+      if (body.error) code = body.error;
+      if (body.msg) code = body.msg;
+    } catch { /* ignore parse error */ }
+    throw new Error(code);
   }
 
-  // Parse Gemini SSE stream
+  // Parse Anthropic SSE stream (proxied through Edge Function)
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let fullText = "";
@@ -141,13 +134,8 @@ export async function sendMessage(messages, orders, onChunk) {
 
       try {
         const event = JSON.parse(data);
-        const parts = event.candidates?.[0]?.content?.parts;
-        if (parts) {
-          for (const part of parts) {
-            if (part.text) {
-              fullText += part.text;
-            }
-          }
+        if (event.type === "content_block_delta" && event.delta?.text) {
+          fullText += event.delta.text;
           onChunk(fullText);
         }
       } catch {

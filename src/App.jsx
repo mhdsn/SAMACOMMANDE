@@ -237,7 +237,12 @@ export default function App() {
           )}
 
           {view === "ai" && (
-            <AIAssistant orders={orders} isMobile={isMobile} />
+            <AIAssistant
+              orders={orders}
+              isMobile={isMobile}
+              isPro={isPro}
+              onUpgrade={goToPricing}
+            />
           )}
 
           {view === "settings" && (
