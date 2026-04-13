@@ -795,8 +795,8 @@ export default function LandingPage({ onLogin, onStart }) {
             </button>
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
-                "Jusqu'à 10 commandes",
-                "3 articles max par commande",
+                "Jusqu'à 30 commandes par mois",
+                "10 articles max par commande",
                 "KPIs du tableau de bord",
                 "Recherche et filtres",
               ].map((f, i) => (

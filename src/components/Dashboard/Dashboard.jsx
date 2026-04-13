@@ -48,7 +48,7 @@ const CHART_SUBS = {
 };
 
 // ─── Mini order list for dashboard panels ───
-function OrderMiniList({ orders, icon, title, subtitle, emptyText, accentColor, bgColor, isMobile, isPro, onUpgrade, proTitle, proDesc }) {
+function OrderMiniList({ orders, icon, title, subtitle, emptyText, accentColor, bgColor, isMobile, isPro, onUpgrade, proTitle, proDesc, onAction, actionLabel, actionColor }) {
   const content = (
     <div style={{
       background: COLORS.surface, borderRadius: 18,
@@ -125,11 +125,29 @@ function OrderMiniList({ orders, icon, title, subtitle, emptyText, accentColor, 
                   <span style={{ fontSize: 11, color: COLORS.textPlaceholder }}>{formatDate(o.date)}</span>
                 </div>
               </div>
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, letterSpacing: -0.3 }}>
-                  {formatCurrency(getOrderTotal(o.items))}
+              <div style={{ textAlign: "right", flexShrink: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.text, letterSpacing: -0.3 }}>
+                    {formatCurrency(getOrderTotal(o.items))}
+                  </div>
+                  <Badge status={o.status} />
                 </div>
-                <Badge status={o.status} />
+                {onAction && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onAction(o.id); }}
+                    style={{
+                      padding: "6px 12px", borderRadius: 8, fontSize: 11, fontWeight: 700,
+                      background: actionColor || COLORS.accent,
+                      color: "#fff", border: "none", cursor: "pointer",
+                      whiteSpace: "nowrap", transition: "all 0.15s ease",
+                      boxShadow: SHADOWS.xs,
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; e.currentTarget.style.transform = "scale(1.04)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; e.currentTarget.style.transform = "scale(1)"; }}
+                  >
+                    {actionLabel || "Confirmer"}
+                  </button>
+                )}
               </div>
             </div>
           ))
@@ -167,7 +185,7 @@ function OrderMiniList({ orders, icon, title, subtitle, emptyText, accentColor, 
   );
 }
 
-export default function Dashboard({ orders, recentOrders, isMobile, isTablet, isPro, onUpgrade }) {
+export default function Dashboard({ orders, recentOrders, isMobile, isTablet, isPro, onUpgrade, onStatusChange }) {
   const [chartType, setChartType] = useState("area");
   const [period, setPeriod] = useState("year");
   const [customRange, setCustomRange] = useState({ start: "", end: "" });
@@ -342,6 +360,9 @@ export default function Dashboard({ orders, recentOrders, isMobile, isTablet, is
           onUpgrade={onUpgrade}
           proTitle="Suivi des confirmations — Pro"
           proDesc="Visualisez les commandes en attente de confirmation."
+          onAction={onStatusChange ? (id) => onStatusChange(id, "confirmed") : undefined}
+          actionLabel="Confirmer"
+          actionColor={COLORS.blue}
         />
         <OrderMiniList
           orders={undeliveredOrders}

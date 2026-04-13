@@ -417,6 +417,7 @@ function StepArticles({ draft, updateItem, addItem, removeItem, errors, clearErr
                     onChange={(e) => { updateItem(i, "qty", e.target.value); clearError(`item_qty_${i}`); }}
                     onFocus={applyFocus}
                     onBlur={(e) => applyBlur(e, qtyErr)}
+                    onWheel={(e) => e.target.blur()}
                     style={{
                       ...inputBase,
                       textAlign: "center",
@@ -439,6 +440,7 @@ function StepArticles({ draft, updateItem, addItem, removeItem, errors, clearErr
                       onChange={(e) => { updateItem(i, "price", e.target.value); clearError(`item_price_${i}`); }}
                       onFocus={applyFocus}
                       onBlur={(e) => applyBlur(e, priceErr)}
+                      onWheel={(e) => e.target.blur()}
                       style={{
                         ...inputBase,
                         textAlign: "right",

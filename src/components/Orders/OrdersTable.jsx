@@ -7,7 +7,7 @@ import { getOrderTotal } from "../../utils/orders";
 import { Search, X, Download, Lock, Inbox, ShoppingBag, Filter, ChevronLeft, ChevronRight } from "lucide-react";
 import OrderRow from "./OrderRow";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 
 export default function OrdersTable({
   orders,

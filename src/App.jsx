@@ -217,6 +217,7 @@ export default function App() {
               isTablet={isTablet}
               isPro={isPro}
               onUpgrade={goToPricing}
+              onStatusChange={changeStatus}
             />
           )}
 

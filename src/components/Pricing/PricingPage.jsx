@@ -1,7 +1,7 @@
 import { COLORS, SHADOWS } from "../../constants/theme";
 import { PLANS } from "../../constants/plans";
 import { formatCurrency } from "../../utils/format";
-import { Check, X as XIcon, Crown, Zap, Shield, Smartphone } from "lucide-react";
+import { Check, X as XIcon, Crown, Zap, Shield, Smartphone, Sparkles } from "lucide-react";
 
 export default function PricingPage({ currentPlan, onSwitch, isMobile }) {
   const starter = PLANS.starter;
@@ -78,8 +78,18 @@ export default function PricingPage({ currentPlan, onSwitch, isMobile }) {
                 <span style={{
                   fontSize: 13, fontWeight: 500,
                   color: f.included ? COLORS.textSecondary : COLORS.textPlaceholder,
+                  display: "flex", alignItems: "center", gap: 6,
                 }}>
                   {f.label}
+                  {f.isNew && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: "2px 7px",
+                      borderRadius: 8, background: COLORS.accentSubtle,
+                      color: COLORS.accent, letterSpacing: 0.3,
+                    }}>
+                      NOUVEAU
+                    </span>
+                  )}
                 </span>
               </div>
             ))}
@@ -158,17 +168,36 @@ export default function PricingPage({ currentPlan, onSwitch, isMobile }) {
             {pro.features.map((f, i) => (
               <div key={i} style={{
                 display: "flex", alignItems: "center", gap: 10,
-                padding: "7px 0",
+                padding: f.highlight ? "8px 10px" : "7px 0",
+                ...(f.highlight ? {
+                  background: `linear-gradient(135deg, ${COLORS.accentSubtle}, #FFF3E8)`,
+                  borderRadius: 10, border: `1.5px solid ${COLORS.accent}22`,
+                  marginTop: 2, marginBottom: 2,
+                } : {}),
               }}>
                 <span style={{
                   width: 20, height: 20, borderRadius: 6,
                   display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  background: COLORS.successLight, color: COLORS.success,
+                  background: f.highlight ? COLORS.accent : COLORS.successLight,
+                  color: f.highlight ? "#fff" : COLORS.success,
                 }}>
-                  <Check size={12} strokeWidth={2.5} />
+                  {f.highlight ? <Sparkles size={12} /> : <Check size={12} strokeWidth={2.5} />}
                 </span>
-                <span style={{ fontSize: 13, fontWeight: 500, color: COLORS.textSecondary }}>
+                <span style={{
+                  fontSize: 13, fontWeight: f.highlight ? 700 : 500,
+                  color: f.highlight ? COLORS.accent : COLORS.textSecondary,
+                  display: "flex", alignItems: "center", gap: 6,
+                }}>
                   {f.label}
+                  {f.highlight && (
+                    <span style={{
+                      fontSize: 10, fontWeight: 700, padding: "2px 7px",
+                      borderRadius: 8, background: COLORS.accent,
+                      color: "#fff", letterSpacing: 0.3,
+                    }}>
+                      NOUVEAU
+                    </span>
+                  )}
                 </span>
               </div>
             ))}

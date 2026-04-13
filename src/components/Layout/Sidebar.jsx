@@ -428,64 +428,6 @@ export default function Sidebar({
           )}
         </div>
 
-        {/* Footer stats */}
-        <div
-          style={{
-            padding: 16,
-            background: COLORS.surface,
-            borderRadius: 14,
-            border: `1.5px solid ${COLORS.borderLight}`,
-            boxShadow: SHADOWS.xs,
-            marginBottom: 10,
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: COLORS.textMuted,
-                  fontWeight: 600,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.8,
-                  marginBottom: 4,
-                }}
-              >
-                Commandes
-              </div>
-              <div
-                style={{
-                  fontSize: 26,
-                  fontWeight: 800,
-                  color: COLORS.text,
-                  letterSpacing: -1,
-                }}
-              >
-                {orderCount}
-              </div>
-            </div>
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: 13,
-                background: `linear-gradient(135deg, ${COLORS.accentLight}, ${COLORS.accentSubtle})`,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: COLORS.accent,
-              }}
-            >
-              <ClipboardList size={20} strokeWidth={1.8} />
-            </div>
-          </div>
-        </div>
 
         {/* Logout button */}
         <button
